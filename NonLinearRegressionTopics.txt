@@ -1,0 +1,19 @@
+The following are the points we are going to cover in the presentation.
+
+Please select the topics you want to talk bout and let me know, I will talk about the rest and perform an R prersentation.
+
+	Regression
+	What is Non linear regression?
+	Linear regression vs. Non-linear regression
+	Transformation of Non-linear
+	Non-linear Regression Models
+	Neural Networks
+	MARS (Multivariate Adaptive Regression Splines)
+	SVM (Support Vector Machines)
+	KNN (K-Nearest Neighbors)
+	Computing
+
+
+I also will create a power point with this information so we can present, please let me know any extra information you want me to add.
+
+Gabriel
