@@ -1,0 +1,130 @@
+---
+title: "Linear regression"
+author: "Gabriel Santos"
+date: '2023-03-07'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+
+```
+
+```{r}
+data()
+```
+
+```{r}
+head(cars)
+```
+
+```{r}
+cars <- mpg
+```
+
+```{r}
+cars %>% head()
+```
+
+```{r}
+cars %>% ggplot()
+```
+
+```{r}
+cars %>% ggplot(aes(x = dist, y = speed)) 
+```
+
+```{r}
+cars %>% ggplot(aes(x = dist, y = speed)) + geom_point() 
+```
+
+```{r}
+cars %>% ggplot(aes(x = dist, y = speed)) + 
+  geom_point(aes()) +
+  geom_smooth(method='lm') 
+```
+
+```{r}
+mmod <- lm(dist ~ speed, data = cars)
+```
+
+```{r}
+mmod
+```
+
+```{r}
+summary(mmod)
+```
+
+```{r}
+attributes(mmod)
+```
+
+```{r}
+mmod$model
+```
+
+```{r}
+hist(mmod$residuals)
+```
+
+```{r}
+new_speeds <- data.frame(speed = c(10,15,20,25,30))
+```
+
+```{r}
+predict(mmod, new_speeds) %>% round(1)
+```
+
+```{r}
+cars %>%
+  lm(dist ~ speed, data =.) %>%
+  predict(data.frame(speed = c(10,15,20,25,30))) %>%
+  round(1)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
