@@ -1,0 +1,288 @@
+---
+title: "NonLinear Regression"
+author: "Gabriel Santos"
+date: "2023-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Dataset:
+Cars and salespersons
+
+we would like to analyze the relationship between how many total cars have been sold by each sales person and how many weeks each salesperson has worked to sell this cars.
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+SalesCars <- read_csv('https://raw.githubusercontent.com/GabrielSantos33/Non-linear-regression/main/CarsSoldWeek.csv')
+
+```
+
+```{r}
+SalesCars
+```
+
+```{r}
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  labs(title = "Scatter Plot Example", 
+       x = "Job period", 
+       y = "Total cars sold")
+```
+Does it look linear? does it look non linear?, both?
+
+What model best represents this data
+this linear regression fits the data quite well
+
+```{r}
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = "y ~ x",se = FALSE) +
+  labs(title = "Scatter Plot Example", 
+       x = "Job period", 
+       y = "Total cars sold")
+```
+## simply by transforming the exploratory valiables does not make a non-linear model
+```{r}
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = "y ~ log(x)",se = FALSE) +
+  labs(title = "Non linear Scatter Plot Example - transformation", 
+       x = "Job period", 
+       y = "Total cars sold")
+```
+
+
+```{r}
+# Fit linear regression model
+lm_model <- lm(Cars_sold ~ J_period, data = SalesCars)
+```
+
+```{r}
+coeficient <- coef(lm_model)
+```
+
+```{r}
+# Extract R-squared value
+r_squared <- summary(lm_model)$r.squared
+```
+
+```{r}
+# Predict y-values
+predicted_y <- predict(lm_model)
+```
+
+```{r}
+# Add R-squared value and predicted y-values to dataframe
+SalesCars$r_squared <- r_squared
+SalesCars$predicted_y <- predicted_y
+```
+
+```{r}
+# Create scatter plot with linear regression line, R-squared value, and predicted y-values using ggplot2
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  geom_text(aes(x = J_period, y = predicted_y, label = round(predicted_y, 2)), vjust = -1) +
+  labs(title = "Scatter Plot with Linear Regression, R-squared, and Predicted Y-values", 
+       x = "Job period", 
+       y = "Total cars sold") +
+  annotate("text", x = max(SalesCars$x), y = max(SalesCars$y), 
+           label = paste0("R-squared: ", round(r_squared, 2)), 
+           hjust = 1, vjust = 1)
+```
+
+```{r}
+# Display R-squared value and predicted y-values
+cat("R-squared value: ", round(r_squared, 2), "\n")
+cat("Predicted Y-values: ", paste(round(predicted_y, 2), collapse = ", "))
+```
+
+```{r}
+# Extract coefficients of the linear equation
+intercept <- coef(lm_model)[1]
+slope <- coef(lm_model)[2]
+
+# Display the linear equation
+cat("Linear equation: y =", round(intercept, 2), "+", round(slope, 2), "* x")
+```
+for each week a person has add a bit mor than a half car per week
+
+for every week the sells is expected to increase by 0.58 per week
+
+NOTE: for rare cases where setting the intercept to ZERO makes sense. but for this case we will not set it this up.
+
+LINEAR REGRESION OUTPUT
+```{r}
+print(summary(lm_model))
+```
+Linear equation: y = 114.5 + 0.58 * x
+Multiple R = 0.8955 very high
+Adjusted R-squared:  0.7867
+R-squared:  0.8019 this model explain the 80% of the variance
+standard error: 45.94 how well the observation fit around the regression line
+
+```{r}
+anova_results <- anova(lm_model)
+```
+
+```{r}
+print("ANOVA Results:")
+print(anova_results)
+```
+Regression = mean square of 111097 
+Residuals = 27440
+total sum of squares = 138537
+---------‬
+Mean Sq = 111097
+Mean Sq error or residual = 2111 = low relative to the total sum of squares
+F Statistics = 52.633 very high you can se that our significance value is very small- the model is statically significant
+P-value = 6.32e-05
+Jperiod = 6.41e-06
+
+
+LETS see the residuals
+```{r}
+residuals <- residuals(lm_model)
+
+# Create a residuals plot
+plot(residuals, main = "Residuals Plot", xlab = "Predicted Cars_sold", ylab = "Residuals")
+
+#x = J_period, y = Cars_sold)
+```
+## Non-linear model
+
+```{r}
+predict_y_nonlinearly <- function(coeficient,x) {
+  coeficient[1] + coeficient[2] * exp(-coeficient[3] * x)
+}
+```
+
+```{r}
+a_nonlinearmodel <- function(coeficient, x, y) {
+  yhat <- predict_y_nonlinearly(coeficient, x)
+  sum((y - yhat ^ 2))
+}
+```
+
+```{r}
+optim(rnorm(3), a_nonlinearmodel, method = "L-BFGS-B",
+      x = SalesCars$J_period, y =SalesCars$Cars_sold,
+      lower = c(-Inf, -Inf, 1e-5),
+      upper = c(Inf, Inf,Inf))
+```
+
+```{r}
+beta <-optim(rnorm(3), a_nonlinearmodel, method = "L-BFGS-B",
+      x = SalesCars$J_period, y =SalesCars$Cars_sold,
+      lower = c(-Inf, -Inf, 1e-5),
+      upper = c(Inf, Inf,Inf))$par
+```
+
+```{r}
+SalesCars$yhat <- predict_y_nonlinearly(beta , SalesCars$J_period)
+```
+
+```{r}
+ggplot(data = SalesCars) + 
+  geom_point(aes(J_period, Cars_sold)) +
+  geom_line(aes(J_period, yhat))
+```
+
+
+
+
+
+```{r}
+set.seed(123)
+x <- seq(0, 50, 1)
+y <- ((runif(1, 10, 20) * x) / (runif(1, 0, 10) + x)) + rnorm(51, 0, 1)
+plot(x, y,
+     main = "Simulated data",
+     xlab = "Independent variable",
+     ylab = "Dependent variable",
+     col = 9,
+     las = 1)
+```
+
+
+```{r}
+m <- nls(y ~ a * x / (b + x), start = list(a = 1, b = 1))
+```
+
+```{r}
+cor(y, predict(m))
+```
+
+```{r}
+plot(x, y,
+     main = "Simulated data",
+     xlab = "Independent variable",
+     ylab = "Dependent variable",
+     col = 9,
+     las = 1)
+lines(x, predict(m),
+      lty = 2,
+      col = "red",
+      lwd = 3)
+```
+
+```{r}
+set.seed(123)
+y <- runif(1, 5, 15) * exp(-runif(1, 0.01, 0.05) * x) + rnorm(51, 0, 0.5)
+plot(x, y,
+     main = "Simulated data",
+     xlab = "Independent variable",
+     ylab = "Dependent variable",
+     col = 9,
+     las = 1)
+```
+
+```{r}
+a_start <- 8
+b_start <- -2 * log(2)/a_start
+
+m <- nls(y ~ a * exp(-b * x), start = list(a = a_start,
+                                           b = b_start))
+cor(y ,predict(m))
+```
+
+```{r}
+plot(x, y,
+     main = "Simulated data",
+     xlab = "Independent variable",
+     ylab = "Dependent variable",
+     col = 9,
+     las = 1)
+lines(x, predict(m),
+      lty = 2,
+      col = "red",
+      lwd = 3)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
