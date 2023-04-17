@@ -1,0 +1,253 @@
+---
+title: "NonLinear Regression - Presentation"
+author: "Gabriel Santos / Anjal Hussan"
+date: "2023-04-18"
+always_allow_html: yes
+output:
+  html_document:
+    df_print: kable
+    theme: flatly
+    highlight: pygments
+    code_folding: hide
+    css: ./lab.css
+    toc: true
+    toc_float:
+      collapsed: true
+    toc_depth: 2
+  pdf_document: 
+    number_sections: yes
+    toc: yes
+    toc_depth: 5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Dataset:
+
+Cars and salespersons
+
+we would like to analyze the relationship between how many total cars have been sold by each sales person and how many weeks each salesperson has worked to sell this cars.
+
+# Libraries
+
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+SalesCars <- read_csv('https://raw.githubusercontent.com/GabrielSantos33/Non-linear-regression/main/CarsSoldWeek.csv', show_col_types = FALSE)
+```
+
+# Data Set
+
+```{r}
+SalesCars
+```
+## Plotting the data
+
+```{r}
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  labs(title = "Scatter Plot", 
+       x = "Job period", 
+       y = "Total cars sold")
+```
+
+
+Does it look linear? Does it look non linear?, both?
+
+What model best represents this data
+
+Does this linear regression fits the data quite well
+
+
+# Linear model
+
+```{r}
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = "y ~ x",se = FALSE) +
+  labs(title = "Scatter Plot Example", 
+       x = "Job period", 
+       y = "Total cars sold")
+```
+
+
+## Fit linear regression model
+
+```{r}
+lm_model <- lm(Cars_sold ~ J_period, data = SalesCars)
+```
+
+## Coefficients
+
+```{r}
+coeficient <- coef(lm_model)
+```
+
+## Extract R-squared value
+
+```{r}
+r_squared <- summary(lm_model)$r.squared
+```
+
+## Predict y-values
+
+```{r}
+predicted_y <- predict(lm_model)
+```
+
+## Adding R-squared value and predicted y-values to dataframe
+
+```{r}
+SalesCars$r_squared <- r_squared
+SalesCars$predicted_y <- predicted_y
+```
+
+
+## Display R-squared value and predicted y-values
+
+```{r}
+cat("R-squared value: ", round(r_squared, 2), "\n")
+cat("Predicted Y-values: ", paste(round(predicted_y, 2), collapse = ", "))
+```
+
+## Extract coefficients of the linear equation
+
+```{r}
+intercept <- coef(lm_model)[1]
+slope <- coef(lm_model)[2]
+# Display the linear equation
+cat("Linear equation: y =", round(intercept, 2), "+", round(slope, 2), "* x")
+```
+For each week a person has add a bit more than a half car per week
+
+For every week the sells is expected to increase by 0.58 per week
+
+NOTE: for rare cases where setting the intercept to ZERO makes sense. but for this case we will not set it this up.
+
+## Linear regression Output
+
+```{r}
+print(summary(lm_model))
+```
+Linear equation: y = 114.5 + 0.58 * x
+Multiple R = 0.8955 very high
+Adjusted R-squared:  0.7867
+R-squared:  0.8019 this model explain the 80% of the variance
+standard error: 45.94 how well the observation fit around the regression line
+
+## ANOVA results
+
+```{r}
+anova_results <- anova(lm_model)
+```
+
+```{r}
+print("ANOVA Results:")
+print(anova_results)
+```
+Regression = mean square of 111097 
+Residuals = 27440
+total sum of squares = 138537
+---------
+Mean Sq = 111097
+Mean Sq error or residual = 2111 = low relative to the total sum of squares
+F Statistics = 52.633 very high you can se that our significance value is very small- the model is statically significant
+P-value = 6.32e-05
+Jperiod = 6.41e-06
+
+
+## Residuals
+
+Let's see the residuals
+
+```{r}
+residuals <- residuals(lm_model)
+# Create a residuals plot
+plot(residuals, main = "Residuals Plot", xlab = "Predicted Cars_sold", ylab = "Residuals")
+#x = J_period, y = Cars_sold)
+```
+
+
+## Transforming the exploratory valiables
+
+Simply by transforming the exploratory valiables does not make a non-linear model
+
+```{r}
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = "y ~ log(x)",se = FALSE) +
+  labs(title = "Non linear Scatter Plot Example - transformation", 
+       x = "Job period", 
+       y = "Total cars sold")
+```
+
+# Exponetial model
+
+Lets use an exponetial model
+not a good model
+
+```{r}
+ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() + 
+  
+  geom_smooth(method = "nls", formula = y ~ a * exp(b * x), se = FALSE, color = "red", 
+              method.args = list(start = list(a = 5, b = 0))) + # Add a red 
+  labs(title = "Exponetial model", 
+       x = "X", y = "Y") + # Set title and axis labels
+  theme_minimal() 
+```
+
+# Non-linear models
+
+## Modelsq quadratic regression model
+
+
+Non Linear model using modelsq quadratic regression model
+not a good one
+
+
+```{r}
+
+library(ggplot2)
+
+y <- SalesCars$Cars_sold
+x <- SalesCars$J_period
+
+# Fit non-linear regression model
+modelsq <- nls(y ~ a * x^2 + b * x + c, start = list(a = 1, b = 1, c = 1))
+           
+p <- ggplot(SalesCars, aes(x = J_period, y = Cars_sold)) +
+  geom_point() +
+  labs(x = "X", y = "Y")
+
+# Add fitted line to the plot
+p <- p +
+  stat_function(fun = function(x) predict(modelsq, newdata = data.frame(x = x)), 
+                color = "red")
+
+print(p)
+```
+
+
+## Non-linear regression Output
+
+```{r}
+print(summary(modelsq))
+```
+
+## residual Square model
+```{r}
+residuals <- residuals(modelsq)
+# Create a residuals plot
+plot(residuals, main = "Residuals Plot", xlab = "Predicted Cars_sold", ylab = "Residuals")
+#x = J_period, y = Cars_sold)
+```
+
+
